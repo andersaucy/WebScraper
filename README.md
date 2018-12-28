@@ -1,2 +1,2 @@
-# PokeGuide
-Web scraping practice. Arranges pokemon stat information into local databases files for faster lookup.
+# Andersaucy's WebScraper
+Web scraping practice. Scrapes from websites and wikias about favorite franchises
