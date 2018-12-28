@@ -1,5 +1,5 @@
 #/anaconda3/bin/python
-#Takes pokemon statistics from Smogon
+#Takes pokemon statistics from Smogon and puts it into a csv
 from urllib.request import urlopen as uReq
 from bs4 import BeautifulSoup
 import json
