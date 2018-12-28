@@ -30,11 +30,12 @@ for gen in generations:
     pokedex = database['pokemon']
 
     #Prepare file write
-    filename = "CSVs/Pokédex_{}.csv".format(gen.upper())
-    f = csv.writer(open(filename, "w"))
-    first = ["Pokemon", "Typing", "Abilities", "HP", "Attack", "Defense", "SpA", "SpD", "Spe"]
-    f.writerow(first)
+    filename = "{}/SmogonDex_{}.csv".format(dirName, gen.upper())
+    f = open(filename, "w")
+    writer = csv.writer(f)
 
+    first_row = ["Pokemon", "Typing", "Abilities", "HP", "Attack", "Defense", "SpA", "SpD", "Spe"]
+    writer.writerow(first_row)
 
     for pokemon in pokedex:
         #Skips create-a-pokemons
@@ -57,4 +58,5 @@ for gen in generations:
             else:
                 full_name = name_stem
             row_data = [full_name,_types,_abil,_hp,_atk,_def,_spa,_spd,_spe]
-            f.writerow(row_data)
+            writer.writerow(row_data)
+    f.close()
