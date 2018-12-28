@@ -1,17 +1,25 @@
 #/anaconda3/bin/python
-#Takes pokemon statistics from Smogon and puts it into a csv
+#Takes pokemon statistics from Smogon and puts it into csv files
 import scraper
+import os
 import json
 import csv
 from pprint import pprint
 
 generations = ['rb','gs','rs','dp','bw','xy','sm']
+#make directory to hold the CSVs
+dirName = 'CSVs'
+if not os.path.exists(dirName):
+    os.mkdir(dirName)
+    print("Directory " , dirName ,  " Created ")
+else:
+    print("Directory " , dirName ,  " already exists")
 
 for gen in generations:
-    #page contains JSON in script tag
     scrape = scraper.Scrape("https://www.smogon.com/dex/{}/pokemon/".format(gen))
     script = scrape.get('script')
 
+    #page contains JSON in script tag
     jsonValue = '{%s}' % (script.text.partition('{')[2].rpartition('}')[0],)
     value = json.loads(jsonValue)
 
