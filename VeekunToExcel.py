@@ -4,6 +4,7 @@ from pprint import pprint
 import time
 import os
 import urllib.request
+
 import xlsxwriter
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -39,7 +40,7 @@ worksheet.freeze_panes(1, 0)
 def main():
     start = time.time()
 
-#    build_dir()
+    build_dir()
     type_scrape()
     pokedex_scrape()
 
@@ -76,7 +77,7 @@ class Pokemon():
         for a in self.__dict__:
             value = (getattr(self, a))
             if 'type' in a:
-                worksheet.insert_image(row, col, value[0])
+                worksheet.insert_image(row, col, value[0], {'x_offset': 15, 'y_offset': 15})
                 col +=1
                 continue
             if (isinstance(value, tuple)):
@@ -92,8 +93,8 @@ def pokedex_scrape():
     driver.implicitly_wait(10)
 
     entries = driver.find_elements_by_xpath('//*[contains(@class,"evolution")]')
-    # pprint(list[0].get_attribute('innerHTML'))
-
+    
+    row = 1
     #Program must click into each individual pokemon to retrieve Number and Artwork
     for entry in entries:
         poke = Pokemon()
@@ -110,11 +111,15 @@ def pokedex_scrape():
         driver.switch_to.window(driver.window_handles[1])
 
         #DEX_NUM
-        poke.dex_num = driver.find_element_by_xpath('//*[@id="content"]/div[4]/div[1]/dl[1]/dd[2]').text
+        poke.dex_num = driver.find_element_by_xpath('//*[@id="dex-header-next"]').text
 
         image = driver.find_element_by_xpath('//*[@id="dex-pokemon-portrait-sprite"]/img')
         src = image.get_attribute('src')
-        poke.sprite = urllib.request.urlretrieve(src, "{}/{}.png".format(dirName,poke.name))
+        try:
+            poke.sprite = urllib.request.urlretrieve(src, "{}/{}.png".format(dirName,poke.name))
+        except:
+            poke.sprite = None
+            pass
 
         typons = driver.find_elements_by_xpath('//*[@id="dex-page-types"]/a/img')
         if (len(typons)==1):
