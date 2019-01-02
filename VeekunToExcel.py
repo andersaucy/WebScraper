@@ -4,7 +4,6 @@ from pprint import pprint
 import time
 import os
 import urllib.request
-
 import xlsxwriter
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -12,7 +11,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
 chrome_options = Options()
-# chrome_options.add_argument("--headless")
+chrome_options.add_argument("--headless")
 driver = webdriver.Chrome(options=chrome_options)
 dirName = 'PokeImg'
 type_to_icon = {}
@@ -46,8 +45,8 @@ def main():
 
     end = time.time()
     elapsed = end - start
-    pprint(elapsed)
-    driver.quit()
+    print(elapsed)
+    quit()
 
 def build_dir():
     if not os.path.exists(dirName):
@@ -59,8 +58,7 @@ def build_dir():
 def type_scrape():
     type_url = 'https://veekun.com/dex/types'
     driver.get(type_url)
-    driver.implicitly_wait(10)
-
+    driver.implicitly_wait(5)
     typelist = driver.find_elements_by_xpath('//*[@id="content"]/ul/li/a/img')
     for t in typelist:
         type = t.get_attribute('title')
@@ -90,15 +88,16 @@ class Pokemon():
 def pokedex_scrape():
     url = "https://veekun.com/dex/pokemon/search?sort=evolution-chain&introduced_in=1&introduced_in=2&introduced_in=3&introduced_in=4&introduced_in=5&introduced_in=6&introduced_in=7"
     driver.get(url)
-    driver.implicitly_wait(10)
+    driver.implicitly_wait(5)
 
     entries = driver.find_elements_by_xpath('//*[contains(@class,"evolution")]')
-    
+
     row = 1
-    #Program must click into each individual pokemon to retrieve Number and Artwork
+    #Program must click into each individual pokemon to retrieve Number and Sprite
     for entry in entries:
         poke = Pokemon()
         link = entry.find_element_by_css_selector('td.name a')
+
         #NAME
         poke.name = link.text
         action = ActionChains(driver)
@@ -111,7 +110,7 @@ def pokedex_scrape():
         driver.switch_to.window(driver.window_handles[1])
 
         #DEX_NUM
-        poke.dex_num = driver.find_element_by_xpath('//*[@id="dex-header-next"]').text
+        poke.dex_num = driver.find_element_by_xpath('//*[@id="dex-header"]').text
 
         image = driver.find_element_by_xpath('//*[@id="dex-pokemon-portrait-sprite"]/img')
         src = image.get_attribute('src')
