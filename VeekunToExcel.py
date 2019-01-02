@@ -4,6 +4,7 @@ from pprint import pprint
 import time
 import os
 import urllib.request
+import xlsxwriter
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
@@ -12,13 +13,33 @@ from selenium.webdriver.common.keys import Keys
 chrome_options = Options()
 # chrome_options.add_argument("--headless")
 driver = webdriver.Chrome(options=chrome_options)
-
 dirName = 'PokeImg'
 type_to_icon = {}
+workbook = xlsxwriter.Workbook('/Users/Andersaucy/Documents/WebScraper/Pokemon.xlsx')
+worksheet = workbook.add_worksheet('Pokedex')
+worksheet.set_default_row(40)
+
+bold = workbook.add_format({'bold': True, 'text_wrap': True})
+
+cell_format = workbook.add_format({'text_wrap': True})
+
+worksheet.write('A1', 'Name', bold)
+worksheet.write('B1', 'Number', bold)
+worksheet.write('C1', 'Image', bold)
+worksheet.write('D1', 'Type', bold)
+worksheet.write('F1', 'HP', bold)
+worksheet.write('G1', 'Attack', bold)
+worksheet.write('H1', 'Defense', bold)
+worksheet.write('I1', 'Special Attack', bold)
+worksheet.write('J1', 'Special Defense', bold)
+worksheet.write('K1', 'Speed', bold)
+worksheet.write('L1', 'Total', bold)
+worksheet.freeze_panes(1, 0)
 
 def main():
     start = time.time()
-    build_dir()
+
+#    build_dir()
     type_scrape()
     pokedex_scrape()
 
@@ -35,7 +56,6 @@ def build_dir():
         print("Directory " , dirName ,  " already exists")
 
 def type_scrape():
-
     type_url = 'https://veekun.com/dex/types'
     driver.get(type_url)
     driver.implicitly_wait(10)
@@ -47,21 +67,25 @@ def type_scrape():
         icon = urllib.request.urlretrieve(source, "{}/{}.png".format(dirName,type))
         type_to_icon[type] = icon
 
-
-
-
 class Pokemon():
-    pass
+    def __repr__(self):
+        return str(self.__dict__)
+        #(self.name, self.dex_num, self.sprite, self.typing, self.hp, self.atk, self.de, self.spA, self.spD, self.spe, self.total)
+    def toData(self, row):
+        col = 0
+        for a in self.__dict__:
+            value = (getattr(self, a))
+            if 'type' in a:
+                worksheet.insert_image(row, col, value[0])
+                col +=1
+                continue
+            if (isinstance(value, tuple)):
+                worksheet.insert_image(row, col, value[0], {'x_scale': 0.5, 'y_scale': 0.5})
+                col +=1
+                continue
+            worksheet.write(row, col, value, cell_format)
+            col += 1
 
-
-
-if not os.path.exists(dirName):
-    os.mkdir(dirName)
-    print("Directory " , dirName ,  " Created ")
-else:
-    print("Directory " , dirName ,  " already exists")
-
-#
 def pokedex_scrape():
     url = "https://veekun.com/dex/pokemon/search?sort=evolution-chain&introduced_in=1&introduced_in=2&introduced_in=3&introduced_in=4&introduced_in=5&introduced_in=6&introduced_in=7"
     driver.get(url)
@@ -88,16 +112,16 @@ def pokedex_scrape():
         #DEX_NUM
         poke.dex_num = driver.find_element_by_xpath('//*[@id="content"]/div[4]/div[1]/dl[1]/dd[2]').text
 
-
         image = driver.find_element_by_xpath('//*[@id="dex-pokemon-portrait-sprite"]/img')
         src = image.get_attribute('src')
         poke.sprite = urllib.request.urlretrieve(src, "{}/{}.png".format(dirName,poke.name))
 
         typons = driver.find_elements_by_xpath('//*[@id="dex-page-types"]/a/img')
         if (len(typons)==1):
-            poke.typing = (type_to_icon[typons[0].get_attribute('title')])
+            poke.type_one = type_to_icon[typons[0].get_attribute('title')]
         else:
-            poke.typing = (type_to_icon[typons[0].get_attribute('title')],type_to_icon[typons[1].get_attribute('title')])
+            poke.type_one = type_to_icon[typons[0].get_attribute('title')]
+            poke.type_two = type_to_icon[typons[1].get_attribute('title')]
 
         stats = driver.find_elements_by_xpath('//*[@class="dex-pokemon-stats-bar"]')
 
@@ -108,21 +132,20 @@ def pokedex_scrape():
         poke.spD = stats[4].text
         poke.spe = stats[5].text
         poke.total = stats[6].text
+        print(poke)
+        poke.toData(row)
+        row += 1
 
+        #Return to dex tab
         driver.close()
         driver.switch_to.window(driver.window_handles[0])
-        pprint(poke.name)
-        pprint(poke.dex_num)
-        pprint(poke.sprite)
-        pprint(poke.typing)
-        pprint(poke.hp )
-        pprint(poke.atk)
-        pprint(poke.de)
-        pprint(poke.spA)
-        pprint(poke.spD)
-        pprint(poke.spe)
-        pprint(poke.total)
 
+def quit():
+    print ("DONE")
+    driver.close()
+    driver.quit()
+    workbook.close()
+    exit()
 
 if __name__ == "__main__":
     main()
