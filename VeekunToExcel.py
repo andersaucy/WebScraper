@@ -15,13 +15,16 @@ chrome_options.add_argument("--headless")
 driver = webdriver.Chrome(options=chrome_options)
 dirName = 'PokeImg'
 type_to_icon = {}
-workbook = xlsxwriter.Workbook('/Users/Andersaucy/Documents/WebScraper/Pokemon.xlsx')
-worksheet = workbook.add_worksheet('Pokedex')
-worksheet.set_default_row(40)
+workbook = xlsxwriter.Workbook('Pokedex.xlsx')
+worksheet = workbook.add_worksheet('NationalDex')
+worksheet.set_default_row(50)
 
 bold = workbook.add_format({'bold': True, 'text_wrap': True})
 
 cell_format = workbook.add_format({'text_wrap': True})
+worksheet.set_column(0, 0, 15)
+worksheet.freeze_panes(1, 0)
+worksheet.freeze_panes(0, 1)
 
 worksheet.write('A1', 'Name', bold)
 worksheet.write('B1', 'Number', bold)
@@ -34,11 +37,9 @@ worksheet.write('I1', 'Special Attack', bold)
 worksheet.write('J1', 'Special Defense', bold)
 worksheet.write('K1', 'Speed', bold)
 worksheet.write('L1', 'Total', bold)
-worksheet.freeze_panes(1, 0)
 
 def main():
     start = time.time()
-
     build_dir()
     type_scrape()
     pokedex_scrape()
@@ -74,16 +75,17 @@ class Pokemon():
         col = 0
         for a in self.__dict__:
             value = (getattr(self, a))
+            if value is None:
+                col += 1
+                continue
             if 'type' in a:
                 worksheet.insert_image(row, col, value[0], {'x_offset': 15, 'y_offset': 15})
-                col +=1
-                continue
-            if (isinstance(value, tuple)):
+            elif a is 'sprite':
                 worksheet.insert_image(row, col, value[0], {'x_scale': 0.5, 'y_scale': 0.5})
-                col +=1
-                continue
-            worksheet.write(row, col, value, cell_format)
+            else:
+                worksheet.write(row, col, value, cell_format)
             col += 1
+
 
 def pokedex_scrape():
     url = "https://veekun.com/dex/pokemon/search?sort=evolution-chain&introduced_in=1&introduced_in=2&introduced_in=3&introduced_in=4&introduced_in=5&introduced_in=6&introduced_in=7"
@@ -108,9 +110,11 @@ def pokedex_scrape():
              .key_up(Keys.COMMAND)\
              .perform()
         driver.switch_to.window(driver.window_handles[1])
-
+        driver.implicitly_wait(10)
         #DEX_NUM
-        poke.dex_num = driver.find_element_by_xpath('//*[@id="dex-header"]').text
+        dex_text = driver.find_element_by_id('dex-header').text
+        req_text = str.split(str(dex_text), "\n")[3]
+        poke.dex_num = ''.join(filter(str.isdigit,req_text))
 
         image = driver.find_element_by_xpath('//*[@id="dex-pokemon-portrait-sprite"]/img')
         src = image.get_attribute('src')
@@ -123,6 +127,7 @@ def pokedex_scrape():
         typons = driver.find_elements_by_xpath('//*[@id="dex-page-types"]/a/img')
         if (len(typons)==1):
             poke.type_one = type_to_icon[typons[0].get_attribute('title')]
+            poke.type_two = None
         else:
             poke.type_one = type_to_icon[typons[0].get_attribute('title')]
             poke.type_two = type_to_icon[typons[1].get_attribute('title')]
@@ -131,12 +136,12 @@ def pokedex_scrape():
 
         poke.hp = stats[0].text
         poke.atk = stats[1].text
-        poke.de = stats[2].text
+        poke.df = stats[2].text
         poke.spA = stats[3].text
         poke.spD = stats[4].text
         poke.spe = stats[5].text
         poke.total = stats[6].text
-        print(poke)
+        print('{}: {}'.format(poke.dex_num, poke.name))
         poke.toData(row)
         row += 1
 
