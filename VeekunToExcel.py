@@ -15,7 +15,7 @@ chrome_options.add_argument("--headless")
 driver = webdriver.Chrome(options=chrome_options)
 dirName = 'output/PokeImg'
 type_to_icon = {}
-workbook = xlsxwriter.Workbook('Pokedex.xlsx')
+workbook = xlsxwriter.Workbook('output/Pokedex.xlsx')
 worksheet = workbook.add_worksheet('NationalDex')
 worksheet.set_default_row(50)
 
