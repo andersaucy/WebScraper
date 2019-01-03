@@ -1,12 +1,18 @@
 #scraper.py
 #from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
-
+import os
 import urllib.request
+
+def build_dir(dirName):
+    if not os.path.exists(dirName):
+        os.mkdir(dirName)
+        print("Directory " , dirName ,  " Created ")
+    else:
+        print("Directory " , dirName ,  " already exists")
 
 class AppURLopener(urllib.request.FancyURLopener):
     version = "Mozilla/5.0"
-
 
 class Scrape:
     def __init__(self, source):

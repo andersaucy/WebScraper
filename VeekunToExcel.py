@@ -1,71 +1,14 @@
 #Makes a self-designed Excel file of a Pokedex from Veekun
 #Uses selenium instead of BeautifulSoup, since clicking into entries is needed to retrieve images
-from pprint import pprint
+#Creates NationalDex from VeekunDex
 import time
-import os
+from scraper import build_dir
 import urllib.request
 import xlsxwriter
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-driver = webdriver.Chrome(options=chrome_options)
-dirName = 'output/PokeImg'
-type_to_icon = {}
-workbook = xlsxwriter.Workbook('output/Pokedex.xlsx')
-worksheet = workbook.add_worksheet('NationalDex')
-worksheet.set_default_row(50)
-
-bold = workbook.add_format({'bold': True, 'text_wrap': True})
-
-cell_format = workbook.add_format({'text_wrap': True})
-worksheet.set_column(0, 0, 15)
-worksheet.freeze_panes(1, 0)
-worksheet.freeze_panes(0, 1)
-
-worksheet.write('A1', 'Name', bold)
-worksheet.write('B1', 'Number', bold)
-worksheet.write('C1', 'Image', bold)
-worksheet.write('D1', 'Type', bold)
-worksheet.write('F1', 'HP', bold)
-worksheet.write('G1', 'Attack', bold)
-worksheet.write('H1', 'Defense', bold)
-worksheet.write('I1', 'Special Attack', bold)
-worksheet.write('J1', 'Special Defense', bold)
-worksheet.write('K1', 'Speed', bold)
-worksheet.write('L1', 'Total', bold)
-
-def main():
-    start = time.time()
-    build_dir()
-    type_scrape()
-    pokedex_scrape()
-
-    end = time.time()
-    elapsed = end - start
-    print(elapsed)
-    quit()
-
-def build_dir():
-    if not os.path.exists(dirName):
-        os.mkdir(dirName)
-        print("Directory " , dirName ,  " Created ")
-    else:
-        print("Directory " , dirName ,  " already exists")
-
-def type_scrape():
-    type_url = 'https://veekun.com/dex/types'
-    driver.get(type_url)
-    driver.implicitly_wait(5)
-    typelist = driver.find_elements_by_xpath('//*[@id="content"]/ul/li/a/img')
-    for t in typelist:
-        type = t.get_attribute('title')
-        source = t.get_attribute('src')
-        icon = urllib.request.urlretrieve(source, "{}/{}.png".format(dirName,type))
-        type_to_icon[type] = icon
 
 class Pokemon():
     def __repr__(self):
@@ -86,6 +29,55 @@ class Pokemon():
                 worksheet.write(row, col, value, cell_format)
             col += 1
 
+dirName = 'output/PokeImg'
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+driver = webdriver.Chrome(options=chrome_options)
+type_to_icon = {}
+workbook = xlsxwriter.Workbook('output/Pokedex.xlsx')
+worksheet = workbook.add_worksheet('NationalDex')
+worksheet.set_default_row(50)
+
+bold = workbook.add_format({'bold': True, 'text_wrap': True})
+
+cell_format = workbook.add_format({'text_wrap': True})
+worksheet.set_column(0, 0, 15)
+worksheet.freeze_panes(1, 0)
+worksheet.freeze_panes(0, 1)
+
+worksheet.write('A1', 'Name', bold)
+worksheet.write('B1', 'Number', bold)
+worksheet.write('C1', 'Image', bold)
+worksheet.write('D1', 'Type', bold)
+#Type takes two datas
+worksheet.write('F1', 'HP', bold)
+worksheet.write('G1', 'Attack', bold)
+worksheet.write('H1', 'Defense', bold)
+worksheet.write('I1', 'Special Attack', bold)
+worksheet.write('J1', 'Special Defense', bold)
+worksheet.write('K1', 'Speed', bold)
+worksheet.write('L1', 'Total', bold)
+
+def main():
+    start = time.time()
+    build_dir(dirName)
+    type_scrape()
+    pokedex_scrape()
+    end = time.time()
+    elapsed = end - start
+    print(elapsed)
+    quit()
+
+def type_scrape():
+    type_url = 'https://veekun.com/dex/types'
+    driver.get(type_url)
+    driver.implicitly_wait(5)
+    typelist = driver.find_elements_by_xpath('//*[@id="content"]/ul/li/a/img')
+    for t in typelist:
+        type = t.get_attribute('title')
+        source = t.get_attribute('src')
+        icon = urllib.request.urlretrieve(source, "{}/{}.png".format(dirName,type))
+        type_to_icon[type] = icon
 
 def pokedex_scrape():
     url = "https://veekun.com/dex/pokemon/search?sort=evolution-chain&introduced_in=1&introduced_in=2&introduced_in=3&introduced_in=4&introduced_in=5&introduced_in=6&introduced_in=7"
