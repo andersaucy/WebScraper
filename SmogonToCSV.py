@@ -8,7 +8,7 @@ from pprint import pprint
 
 generations = ['rb','gs','rs','dp','bw','xy','sm']
 #make directory to hold the CSVs
-dirName = 'CSVs'
+dirName = 'output/CSVs'
 if not os.path.exists(dirName):
     os.mkdir(dirName)
     print("Directory " , dirName ,  " Created ")

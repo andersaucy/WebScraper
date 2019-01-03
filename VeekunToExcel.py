@@ -13,7 +13,7 @@ from selenium.webdriver.common.keys import Keys
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 driver = webdriver.Chrome(options=chrome_options)
-dirName = 'PokeImg'
+dirName = 'output/PokeImg'
 type_to_icon = {}
 workbook = xlsxwriter.Workbook('Pokedex.xlsx')
 worksheet = workbook.add_worksheet('NationalDex')
