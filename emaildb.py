@@ -20,25 +20,32 @@ def email_list():
     run_db()
     bprint("Printing Email List...")
     cursor.execute("SELECT Person.Name, Person.Email FROM Person;")
-    results = cursor.fetchall()
-    if not results:
+    persons = cursor.fetchall()
+    if not persons:
         bprint("No Data Stored")
-    for r in results:
-        print(r)
+    for p in persons:
+        print(p)
     close_db()
 
 def add_email():
     run_db()
     bprint("Adding Email...")
-    name = input("Name of person:\n")
-    email = input("Email Address of " + name + ":\n")
+    bprint("Name of person:")
+    name = input()
+    email_prompt = "Email Address of " + name + ":"
+    bprint(email_prompt)
+    email = input()
     new_person = (name, email)
     query = "INSERT INTO Person (Name, Email) VALUES (?, ?)"
-    cursor = db.cursor()
-    cursor.execute(query, list(new_person))
-    db.commit()
-    print (new_person)
-    bprint("Succesfully added!")
+    #Check if exists
+    cursor.execute("SELECT Person.Name, Person.Email FROM Person;")
+    persons = cursor.fetchall()
+    if new_person in persons:
+        bprint("Person already exists!")
+    elif new_person not in persons:
+        cursor.execute(query, list(new_person))
+        db.commit()
+        bprint("Succesfully added!")
     close_db()
 
 def loadDB():

@@ -6,8 +6,7 @@ import smtplib
 import re
 import emoji
 import signal
-import threading
-import sys
+import emaildb
 from emaildb import bprint
 import Emails
 from email.mime.multipart import MIMEMultipart
@@ -15,17 +14,24 @@ from email.mime.text import MIMEText
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-daynames = {"SUN:":"SUNDAY:", "MON:":"MONDAY:", "TUES:":"TUESDAY:", "WED:":"WEDNESDAY:", "THURS:":"THURSDAY:","FRI:":"FRIDAY:","SAT:":"SATURDAY:"}
+
 usr = None
 pw =  None
 url = "https://www.weather.com"
+cloud = emoji.emojize(':cloud:', use_aliases=True)
+rain = emoji.emojize(':sweat_drops:',use_aliases=True)
+drop = emoji.emojize(':droplet:', use_aliases=True)
+umbrella = emoji.emojize(':umbrella:', use_aliases=True)
+sun = emoji.emojize(':sunny:', use_aliases=True)
+storm = emoji.emojize(':zap:',use_aliases=True)
+
+daynames = {"SUN:":"SUNDAY:", "MON:":"MONDAY:", "TUES:":"TUESDAY:", "WED:":"WEDNESDAY:", "THURS:":"THURSDAY:","FRI:":"FRIDAY:","SAT:":"SATURDAY:"}
+weathers = {"LOW\n":"","HIGH\n":"","°":"°F","CLOUDY":"CLOUDY"+cloud,"RAIN":"RAIN"+rain, "SUNNY":"SUNNY"+sun, "STORM":"STORM"+storm}
 
 def main():
     startup()
     schedule.every().day.at("06:30").do(job)
     while True:
-        job()
-        exit()
         schedule.run_pending()
         signal.signal(signal.SIGINT, signal_handler)
         time.sleep(1)
@@ -51,9 +57,8 @@ def job():
     dt = datetime.datetime.now()
     date = dt.strftime('%B %d, %Y')
 
-    TODAYxpath = '//*[@id="header-LocalsuiteNav-9e937d06-a4be-493a-bc54-942db4a05af8"]/div/div/div/ul/li[1]/a'
-
-    TODAY_elem = driver.find_element_by_xpath(TODAYxpath)
+    #TODAY Xpath
+    TODAY_elem = driver.find_element_by_xpath('//*[@id="header-LocalsuiteNav-9e937d06-a4be-493a-bc54-942db4a05af8"]/div/div/div/ul/li[1]/a')
     TODAY_elem.click()
     driver.implicitly_wait(15)
     time.sleep(10)
@@ -78,11 +83,7 @@ def job():
         fc.append(report)
 
     forecast = '\n\n'.join(fc)
-    cloud = emoji.emojize(':cloud:', use_aliases=True)
-    rain = emoji.emojize(':sweat_drops:',use_aliases=True)
-    drop = emoji.emojize(':droplet:', use_aliases=True)
-    umbrella = emoji.emojize(':umbrella:', use_aliases=True)
-
+    #Raindrops and Umbrellas
     rain_check = re.findall(r'\d+%', forecast)
     seen = []
     for rc in rain_check:
@@ -95,14 +96,15 @@ def job():
             seen.append(rc)
         elif rc in seen:
             continue
-    forecast = forecast.replace('LOW\n', '')
-    forecast = forecast.replace('HIGH\n', '')
-    forecast = forecast.replace('°', '°' + 'F')
-    forecast = forecast.replace('CLOUDY', 'CLOUDY' + cloud)
-    forecast = forecast.replace('RAIN', 'RAIN' + rain)
+
+    #Farenheit and Weather Emojis
+    for weather in weathers.keys():
+        forecast = forecast.replace(weather, weathers[weather])
+    #Daynames
     for day in daynames.keys():
         forecast = forecast.replace(day, daynames[day])
     print (forecast)
+
     msg = MIMEMultipart('alternative')
     msg['Subject'] = "AnderWeather: {}".format(date)
     msg['From'] = usr
