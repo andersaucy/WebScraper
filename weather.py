@@ -8,23 +8,44 @@ import emoji
 import signal
 import threading
 import sys
-from emailaddresses import bprint
-import emailaddresses as emails
+from emaildb import bprint
+import Emails
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-usr = emails.ANDERSON_EMAIL
-pw = emails.ANDERSON_PW
-daynames = {"SUN":"SUNDAY", "MON":"MONDAY", "TUES":"TUESDAY", "WED":"WEDNESDAY", "THURS":"THURSDAY","FRI":"FRIDAY","SAT":"SATURDAY"}
+daynames = {"SUN:":"SUNDAY:", "MON:":"MONDAY:", "TUES:":"TUESDAY:", "WED:":"WEDNESDAY:", "THURS:":"THURSDAY:","FRI:":"FRIDAY:","SAT:":"SATURDAY:"}
+usr = None
+pw =  None
+url = "https://www.weather.com"
+
+def main():
+    startup()
+    schedule.every().day.at("06:30").do(job)
+    while True:
+        job()
+        exit()
+        schedule.run_pending()
+        signal.signal(signal.SIGINT, signal_handler)
+        time.sleep(1)
+
+def startup():
+    global usr
+    global pw
+    bprint('Sender Email Address:')
+    usr = input()
+    bprint('Password:')
+    pw = input()
+    bprint('Running...')
+    bprint('Press Ctrl+C to enter command')
 
 def job():
     chrome_options = Options()
     chrome_options.add_argument("--disable-notifications")
     #chrome_options.add_argument("--headless")
     driver = webdriver.Chrome(options=chrome_options)
-    driver.get("https://www.weather.com")
+    driver.get(url)
     driver.implicitly_wait(10)
 
     dt = datetime.datetime.now()
@@ -37,6 +58,7 @@ def job():
     driver.implicitly_wait(15)
     time.sleep(10)
 
+    #handle popup
     try:
         x_out = driver.find_element_by_id('kplDeferButton')
         x_out.click()
@@ -63,14 +85,15 @@ def job():
 
     rain_check = re.findall(r'\d+%', forecast)
     seen = []
-    for ra in rain_check:
-        if ra not in seen:
-            if (int(ra.strip('%')) > 55):
-                forecast = re.sub(ra, ra + drop + umbrella, forecast)
-            else:
-                forecast = re.sub(ra, ra + drop, forecast)
-            seen.append(ra)
-        elif ra in seen:
+    for rc in rain_check:
+        if rc not in seen:
+            bring_umbrella = int(rc.strip('%')) > 55
+            if bring_umbrella:
+                forecast = re.sub(rc, rc + drop + umbrella, forecast)
+            elif not bring_umbrella:
+                forecast = re.sub(rc, rc + drop, forecast)
+            seen.append(rc)
+        elif rc in seen:
             continue
     forecast = forecast.replace('LOW\n', '')
     forecast = forecast.replace('HIGH\n', '')
@@ -79,13 +102,13 @@ def job():
     forecast = forecast.replace('RAIN', 'RAIN' + rain)
     for day in daynames.keys():
         forecast = forecast.replace(day, daynames[day])
-
+    print (forecast)
     msg = MIMEMultipart('alternative')
     msg['Subject'] = "AnderWeather: {}".format(date)
     msg['From'] = usr
     msg['To'] = usr
 
-    text = '\nAy,\nCheck this site for the weather: ' + driver.current_url
+    text = '\n\nReport brought to you by ' + url + '\nFeel free to reply with any suggestions on how to improve this experience!'
     forecast = forecast + text
     part1 = MIMEText(text, 'plain')
     part2 = MIMEText(forecast, 'plain')
@@ -97,40 +120,38 @@ def job():
     smtpObj.starttls()
     smtpObj.login(usr, pw)
 
-    recipients = emails.loadDB()
+#    recipients = emaildb.loadDB()
     # for recip in recipients:
     #     bprint(recip)
     #     smtpObj.sendmail(usr, recip, msg.as_string())
 
-    smtpObj.sendmail(usr, usr,  msg.as_string())
-    smtpObj.sendmail(usr, emails.SEAN_EMAIL, msg.as_string())
-    smtpObj.sendmail(usr, emails.STEVEN_EMAIL, msg.as_string())
-    smtpObj.sendmail(usr, emails.ERICA_EMAIL,  msg.as_string())
-    bprint('All emails sent', None)
+    #Self
+    #smtpObj.sendmail(usr, usr,  msg.as_string())
+    #Others
+    # smtpObj.sendmail(usr, Emails.SEAN_EMAIL, msg.as_string())
+    # smtpObj.sendmail(usr, Emails.STEVEN_EMAIL, msg.as_string())
+    # smtpObj.sendmail(usr, Emails.ERICA_EMAIL,  msg.as_string())
+    # smtpObj.sendmail(usr, Emails.JENNY_EMAIL,  msg.as_string())
+    #bprint('All emails sent')
     driver.quit()
 
-schedule.every().day.at("06:31").do(job)
-
 def signal_handler(signal, frame):
-    bprint('\nEnter command (Ctrl+C to terminate . "back" to return)', None)
+    bprint('\nEnter command (Ctrl+C to terminate . "back" to return)')
     call = input()
     if (call == 'list'):
-        emails.email_list()
-        bprint('Press Ctrl+C to enter command', None)
+        emaildb.email_list()
+        bprint('Press Ctrl+C to enter command')
         pass
     elif (call == 'restart'):
-        emails.restartDB()
-        bprint('Press Ctrl+C to enter command', None)
+        emaildb.restartDB()
+        bprint('Press Ctrl+C to enter command')
         pass
     elif (call == 'add'):
-        emails.add_email()
-        bprint('Press Ctrl+C to enter command', None)
+        emaildb.add_email()
+        bprint('Press Ctrl+C to enter command')
         pass
     else:
-        bprint('Returning to main dialog', None)
+        bprint('Returning to main dialog')
 
-bprint('Press Ctrl+C to enter command', None)
-while True:
-    schedule.run_pending()
-    signal.signal(signal.SIGINT, signal_handler)
-    time.sleep(1)
+if __name__ == "__main__":
+    main()
