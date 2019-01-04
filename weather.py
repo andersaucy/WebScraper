@@ -67,7 +67,6 @@ def job():
     forecast = forecast.replace('RAIN', 'RAIN' + rain)
     for day in daynames.keys():
         forecast = forecast.replace(day, daynames[day])
-    print (forecast)
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = "AnderWeather: {}".format(date)
@@ -86,6 +85,7 @@ def job():
     smtpObj.login(usr, pw)
     smtpObj.sendmail(usr, usr, msg.as_string())
     smtpObj.sendmail(emails.SEAN_EMAIL, usr, msg.as_string())
+    smtpObj.sendmail(emails.STEVEN_EMAIL, usr, msg.as_string())
 
     driver.quit()
 schedule.every().day.at("06:31").do(job)
