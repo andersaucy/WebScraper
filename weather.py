@@ -5,6 +5,10 @@ import schedule
 import smtplib
 import re
 import emoji
+import signal
+import threading
+import sys
+from emailaddresses import bprint
 import emailaddresses as emails
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -17,7 +21,8 @@ daynames = {"SUN":"SUNDAY", "MON":"MONDAY", "TUES":"TUESDAY", "WED":"WEDNESDAY",
 
 def job():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-notifications")
+    #chrome_options.add_argument("--headless")
     driver = webdriver.Chrome(options=chrome_options)
     driver.get("https://www.weather.com")
     driver.implicitly_wait(10)
@@ -73,7 +78,8 @@ def job():
     msg['From'] = usr
     msg['To'] = usr
 
-    text = 'Ay,\nCheck this site for the weather: ' + driver.current_url
+    text = '\nAy,\nCheck this site for the weather: ' + driver.current_url
+    forecast = forecast + text
     part1 = MIMEText(text, 'plain')
     part2 = MIMEText(forecast, 'plain')
     msg.attach(part1)
@@ -83,13 +89,41 @@ def job():
     smtpObj.ehlo()
     smtpObj.starttls()
     smtpObj.login(usr, pw)
-    smtpObj.sendmail(usr, usr, msg.as_string())
-    smtpObj.sendmail(emails.SEAN_EMAIL, usr, msg.as_string())
-    smtpObj.sendmail(emails.STEVEN_EMAIL, usr, msg.as_string())
 
+    recipients = emails.loadDB()
+    # for recip in recipients:
+    #     bprint(recip)
+    #     smtpObj.sendmail(usr, recip, msg.as_string())
+
+    smtpObj.sendmail(usr, usr,  msg.as_string())
+    smtpObj.sendmail(usr, emails.SEAN_EMAIL, msg.as_string())
+    smtpObj.sendmail(usr, emails.STEVEN_EMAIL, msg.as_string())
+    smtpObj.sendmail(usr, emails.ERICA_EMAIL,  msg.as_string())
+    bprint('All emails sent', None)
     driver.quit()
+
 schedule.every().day.at("06:31").do(job)
 
+def signal_handler(signal, frame):
+    bprint('\nEnter command (Ctrl+C to terminate . "back" to return)', None)
+    call = input()
+    if (call == 'list'):
+        emails.email_list()
+        bprint('Press Ctrl+C to enter command', None)
+        pass
+    elif (call == 'restart'):
+        emails.restartDB()
+        bprint('Press Ctrl+C to enter command', None)
+        pass
+    elif (call == 'add'):
+        emails.add_email()
+        bprint('Press Ctrl+C to enter command', None)
+        pass
+    else:
+        bprint('Returning to main dialog', None)
+
+bprint('Press Ctrl+C to enter command', None)
 while True:
     schedule.run_pending()
+    signal.signal(signal.SIGINT, signal_handler)
     time.sleep(1)
