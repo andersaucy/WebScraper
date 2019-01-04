@@ -34,9 +34,16 @@ def job():
 
     TODAY_elem = driver.find_element_by_xpath(TODAYxpath)
     TODAY_elem.click()
-
     driver.implicitly_wait(15)
-    time.sleep(5)
+    time.sleep(10)
+
+    try:
+        x_out = driver.find_element_by_id('kplDeferButton')
+        x_out.click()
+        time.sleep(5)
+    except:
+        pass
+
     looking_ahead = driver.find_elements_by_class_name('today-daypart-content')
     fc = []
     for l in looking_ahead:
