@@ -69,4 +69,6 @@ def restartDB():
     close_db()
 
 def bprint(obj):
-    print (BOLD + obj + unBOLD)
+    bolded = BOLD + obj + unBOLD
+    print (bolded)
+    return bolded

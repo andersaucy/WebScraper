@@ -24,9 +24,27 @@ drop = emoji.emojize(':droplet:', use_aliases=True)
 umbrella = emoji.emojize(':umbrella:', use_aliases=True)
 sun = emoji.emojize(':sunny:', use_aliases=True)
 storm = emoji.emojize(':zap:',use_aliases=True)
+shower = emoji.emojize(':shower:', use_aliases=True)
+clear = emoji.emojize(':white_check_mark:', use_aliases=True)
+daynames = {
+    "SUN:":"SUNDAY:",
+    "MON:":"MONDAY:",
+    "TUES:":"TUESDAY:",
+    "WED:":"WEDNESDAY:",
+    "THURS:":"THURSDAY:",
+    "FRI:":"FRIDAY:",
+    "SAT:":"SATURDAY:"
+}
 
-daynames = {"SUN:":"SUNDAY:", "MON:":"MONDAY:", "TUES:":"TUESDAY:", "WED:":"WEDNESDAY:", "THURS:":"THURSDAY:","FRI:":"FRIDAY:","SAT:":"SATURDAY:"}
-weathers = {"LOW\n":"","HIGH\n":"","°":"°F","CLOUDY":"CLOUDY"+cloud,"RAIN":"RAIN"+rain, "SUNNY":"SUNNY"+sun, "STORM":"STORM"+storm}
+weathers = {
+    "LOW\n":"","HIGH\n":"","°":"°F",
+    "CLOUDY":"CLOUDY"+cloud,
+    "RAIN":"RAIN"+rain,
+    "SUNNY":"SUNNY"+sun,
+    "STORM":"STORM"+storm,
+    "SHOWERS":"SHOWERS"+shower,
+    "CLEAR":"CLEAR" + clear
+}
 
 def main():
     startup()
@@ -37,14 +55,29 @@ def main():
         time.sleep(1)
 
 def startup():
+    global smtpObj
+    smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
+    smtpObj.ehlo()
+    smtpObj.starttls()
+    collect_info()
+    approved = False
+    while (not approved): #USE A DO_WHILE
+        try:
+            smtpObj.login(usr, pw)
+            approved = True
+        except:
+            bprint("Try again!")
+            collect_info()
+    bprint('Running...')
+    bprint('Press Ctrl+C to enter command')
+
+def collect_info():
     global usr
     global pw
     bprint('Sender Email Address:')
     usr = input()
     bprint('Password:')
     pw = input()
-    bprint('Running...')
-    bprint('Press Ctrl+C to enter command')
 
 def job():
     chrome_options = Options()
@@ -65,9 +98,12 @@ def job():
 
     #handle popup
     try:
-        x_out = driver.find_element_by_id('kplDeferButton')
+        x_out = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.id, "kplDeferButton")));
+        # x_out = driver.find_element_by_id('kplDeferButton')
+        if(x_out):
+            print("POPUP!")
         x_out.click()
-        time.sleep(5)
+        time.sleep(2)
     except:
         pass
 
@@ -152,6 +188,9 @@ def signal_handler(signal, frame):
         emaildb.add_email()
         bprint('Press Ctrl+C to enter command')
         pass
+    elif (call == 'test'):
+        job()
+        exit()
     else:
         bprint('Returning to main dialog')
 
