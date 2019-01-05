@@ -1,8 +1,11 @@
 #weather.py
+#Emails using gmail faily weather reports
 import datetime
 import time
 import schedule
 import smtplib
+import requests
+import json
 import re
 import emoji
 import signal
@@ -13,10 +16,14 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 usr = None
 pw =  None
+smtpObj = None
 url = "https://www.weather.com"
 cloud = emoji.emojize(':cloud:', use_aliases=True)
 rain = emoji.emojize(':sweat_drops:',use_aliases=True)
@@ -85,11 +92,22 @@ def job():
     #chrome_options.add_argument("--headless")
     driver = webdriver.Chrome(options=chrome_options)
     driver.get(url)
-    driver.implicitly_wait(10)
 
     dt = datetime.datetime.now()
     date = dt.strftime('%B %d, %Y')
 
+    geo_req = requests.get('http://api.ipstack.com/98.109.11.147?access_key=545a224d030e4b931f060f2ce8b7a296')
+    geo_json = json.loads(geo_req.text)
+    city = geo_json['city'] + ', ' + geo_json['region_code']
+
+    location_form = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="header-TwcHeader-10c7c60c-aebb-4e78-b655-512b2460d9f4"]/div/div/div/div[1]/div/div[1]/div/input')))
+    location_form.send_keys(city)
+    time.sleep(1)
+    location_form.send_keys(Keys.ARROW_DOWN)
+    location_form.send_keys(Keys.RETURN)
+
+    driver.implicitly_wait(10)
+    time.sleep(2)
     #TODAY Xpath
     TODAY_elem = driver.find_element_by_xpath('//*[@id="header-LocalsuiteNav-9e937d06-a4be-493a-bc54-942db4a05af8"]/div/div/div/ul/li[1]/a')
     TODAY_elem.click()
