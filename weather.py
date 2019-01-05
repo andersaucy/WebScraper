@@ -119,19 +119,6 @@ def job():
         fc.append(report)
 
     forecast = '\n\n'.join(fc)
-    #Raindrops and Umbrellas
-    rain_check = re.findall(r'\d+%', forecast)
-    seen = []
-    for rc in rain_check:
-        if rc not in seen:
-            bring_umbrella = int(rc.strip('%')) > 55
-            if bring_umbrella:
-                forecast = re.sub(rc, rc + drop + umbrella, forecast)
-            elif not bring_umbrella:
-                forecast = re.sub(rc, rc + drop, forecast)
-            seen.append(rc)
-        elif rc in seen:
-            continue
 
     #Farenheit and Weather Emojis
     for weather in weathers.keys():
@@ -139,33 +126,55 @@ def job():
     #Daynames
     for day in daynames.keys():
         forecast = forecast.replace(day, daynames[day])
-    print (forecast)
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = "AnderWeather: {}".format(date)
-    msg['From'] = usr
-    msg['To'] = usr
+    # temp = re.findall(r'\n\d+°F', forecast)
+    # for t in temp:
+    #     forecast = forecast.replace(t, bprint(t))
+    #Raindrops and Umbrellas
+    rain_check = re.findall(r'\n\d+%', forecast)
+    seen = []
 
-    text = '\n\nReport brought to you by ' + url + '\nFeel free to reply with any suggestions on how to improve this experience!'
-    forecast = forecast + text
-    part1 = MIMEText(text, 'plain')
+    for rc in rain_check:
+        if rc not in seen:
+            seen.append(rc)
+            bring_umbrella = int(rc.strip('%')) > 55
+            if bring_umbrella:
+                forecast = re.sub(rc, rc + drop + umbrella, forecast)
+            elif not bring_umbrella:
+                forecast = re.sub(rc, rc + drop, forecast)
+        elif rc in seen:
+            continue
+
+    print(forecast)
+
+    closing = '\n\n{} Weather Report brought to you by {}\nPlease reply with any suggestions on how to improve this experience!'.format(city, url)
+
     part2 = MIMEText(forecast, 'plain')
-    msg.attach(part1)
-    msg.attach(part2)
+    part3 = MIMEText(closing, 'plain')
+    recipients = emaildb.loadDB()
 
-    smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
-    smtpObj.ehlo()
-    smtpObj.starttls()
-    smtpObj.login(usr, pw)
+    for recip in recipients:
+        bprint ("Sending to ")
+        print(recip)
+        p_name = recip[0]
+        p_email = recip[1]
+        header = 'Good morning, ' + p_name + '! The forecast is as follows! \n\n'
 
-#    recipients = emaildb.loadDB()
-    # for recip in recipients:
-    #     bprint(recip)
-    #     smtpObj.sendmail(usr, recip, msg.as_string())
+        msg = MIMEMultipart()
+        msg['Subject'] = "AnderWeather: {}".format(date)
+        msg['From'] = usr
+        msg['To'] = p_email
+
+        part1 = MIMEText(header, 'plain')
+    # forecast = header + forecast + text
+        msg.attach(part1)
+        msg.attach(part2)
+        msg.attach(part3)
 
     #Self
-    #smtpObj.sendmail(usr, usr,  msg.as_string())
+        #smtpObj.sendmail(usr, usr,  msg.as_string())
     #Others
+        smtpObj.sendmail(usr, p_email,  msg.as_string())
     # smtpObj.sendmail(usr, Emails.SEAN_EMAIL, msg.as_string())
     # smtpObj.sendmail(usr, Emails.STEVEN_EMAIL, msg.as_string())
     # smtpObj.sendmail(usr, Emails.ERICA_EMAIL,  msg.as_string())

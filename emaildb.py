@@ -48,6 +48,7 @@ def add_email():
         bprint("Succesfully added!")
     close_db()
 
+#Returns list of persons
 def loadDB():
     run_db()
     bprint("Sending emails to those in database...")
@@ -55,9 +56,8 @@ def loadDB():
     cursor.execute("SELECT Person.Name, Person.Email FROM Person;")
     results = cursor.fetchall()
     for r in results:
-        bprint ("Sending to ")
-        print(r)
-        list.append(r[1])
+        # print(r)
+        list.append(r)
     return list
     close_db()
 
