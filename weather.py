@@ -33,6 +33,7 @@ sun = emoji.emojize(':sunny:', use_aliases=True)
 storm = emoji.emojize(':zap:',use_aliases=True)
 shower = emoji.emojize(':shower:', use_aliases=True)
 clear = emoji.emojize(':white_check_mark:', use_aliases=True)
+wind = emoji.emojize(':dash:', use_aliases = True)
 daynames = {
     "SUN:":"SUNDAY:",
     "MON:":"MONDAY:",
@@ -50,12 +51,13 @@ weathers = {
     "SUNNY":"SUNNY"+sun,
     "STORM":"STORM"+storm,
     "SHOWERS":"SHOWERS"+shower,
-    "CLEAR":"CLEAR" + clear
+    "CLEAR":"CLEAR" + clear,
+    "WIND":"WIND" + wind
 }
 
 def main():
     startup()
-    schedule.every().day.at("06:30").do(job)
+    schedule.every().day.at("06:29").do(job)
     while True:
         schedule.run_pending()
         signal.signal(signal.SIGINT, signal_handler)
@@ -63,14 +65,12 @@ def main():
 
 def startup():
     global smtpObj
-    smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
-    smtpObj.ehlo()
-    smtpObj.starttls()
-    collect_info()
+    mail = connect(smtpObj)
     approved = False
+    collect_info()
     while (not approved): #USE A DO_WHILE
         try:
-            smtpObj.login(usr, pw)
+            mail.login(usr, pw)
             approved = True
         except:
             bprint("Try again!")
@@ -86,19 +86,52 @@ def collect_info():
     bprint('Password:')
     pw = input()
 
-def job():
+def connect(connect):
+    connect = smtplib.SMTP('smtp.gmail.com', 587)
+    connect.ehlo()
+    connect.starttls()
+    return connect
+
+def is_connected(connect):
+    try:
+        status = connect.noop()[0]
+    except:
+        status = -1
+    return True if status == 250 else False
+
+def start_driver():
     chrome_options = Options()
     chrome_options.add_argument("--disable-notifications")
     #chrome_options.add_argument("--headless")
     driver = webdriver.Chrome(options=chrome_options)
-    driver.get(url)
+    return driver
+
+def locate(driver):
+    iploc = 'https://www.iplocation.net/'
+    driver.get(iploc)
+    IPAddr_elem =  WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="wrapper"]/section/div/div/div[1]/div[5]/div[2]/p/span[1]')))
+    IPAddr = IPAddr_elem.text
+    print (IPAddr)
+    geo_req = requests.get('http://api.ipstack.com/{}?access_key={}'.format(IPAddr,Emails.LocationKEY))
+    geo_json = json.loads(geo_req.text)
+    city = geo_json['city'] + ', ' + geo_json['region_code']
+    return city
+
+def job():
+    global usr
+    global pw
+    global smtpObj
+    if not is_connected(smtpObj):
+        smtpObj = connect(smtpObj)
+        smtpObj.login(usr,pw)
+
+    driver = start_driver()
+    city = locate(driver)
 
     dt = datetime.datetime.now()
     date = dt.strftime('%B %d, %Y')
 
-    geo_req = requests.get('http://api.ipstack.com/98.109.11.147?access_key=545a224d030e4b931f060f2ce8b7a296')
-    geo_json = json.loads(geo_req.text)
-    city = geo_json['city'] + ', ' + geo_json['region_code']
+    driver.get(url)
 
     location_form = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="header-TwcHeader-10c7c60c-aebb-4e78-b655-512b2460d9f4"]/div/div/div/div[1]/div/div[1]/div/input')))
     location_form.send_keys(city)
@@ -145,9 +178,6 @@ def job():
     for day in daynames.keys():
         forecast = forecast.replace(day, daynames[day])
 
-    # temp = re.findall(r'\n\d+°F', forecast)
-    # for t in temp:
-    #     forecast = forecast.replace(t, bprint(t))
     #Raindrops and Umbrellas
     rain_check = re.findall(r'\n\d+%', forecast)
     seen = []
@@ -220,6 +250,8 @@ def signal_handler(signal, frame):
         exit()
     else:
         bprint('Returning to main dialog')
+        bprint('Press Ctrl+C to enter command')
+        pass
 
 if __name__ == "__main__":
     main()

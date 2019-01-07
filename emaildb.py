@@ -48,6 +48,7 @@ def add_email():
         bprint("Succesfully added!")
     close_db()
 
+
 #Returns list of persons
 def loadDB():
     run_db()
