@@ -36,18 +36,38 @@ def add_email():
     bprint(email_prompt)
     email = input()
     new_person = (name, email)
-    query = "INSERT INTO Person (Name, Email) VALUES (?, ?)"
+    add_query = "INSERT INTO Person (Name, Email) VALUES (?, ?)"
     #Check if exists
     cursor.execute("SELECT Person.Name, Person.Email FROM Person;")
     persons = cursor.fetchall()
     if new_person in persons:
         bprint("Person already exists!")
     elif new_person not in persons:
-        cursor.execute(query, list(new_person))
+        cursor.execute(add_query, list(new_person))
         db.commit()
         bprint("Succesfully added!")
     close_db()
 
+def delete_email():
+    run_db()
+    bprint("Deleting email...")
+    bprint("Name of person:")
+    name = input()
+    lookup_query = "SELECT * FROM Person WHERE Name=?"
+    cursor.execute(lookup_query, (name,))
+    dropped_person = cursor.fetchall()
+    if not dropped_person:
+        bprint("Oops! No entry exists in the database!")
+        return
+    bprint("Drop this person?")
+    for p in dropped_person:
+        print (p)
+    drop = input()
+    if (drop == 'yes'):
+        delete_query = "DELETE FROM Person WHERE Name=?"
+        cursor.execute(delete_query, (name,))
+        bprint("Succesfully dropped!")
+    close_db()
 
 #Returns list of persons
 def loadDB():
@@ -64,9 +84,9 @@ def loadDB():
 
 def restartDB():
     run_db()
-    bprint("Database Restarted")
     db.execute('DROP TABLE IF EXISTS Person')
     db.execute('CREATE TABLE Person (Name text, Email text)')
+    bprint("Database Restarted")
     close_db()
 
 def bprint(obj):

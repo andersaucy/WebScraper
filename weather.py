@@ -214,7 +214,7 @@ def job():
         msg['To'] = p_email
 
         part1 = MIMEText(header, 'plain')
-    # forecast = header + forecast + text
+
         msg.attach(part1)
         msg.attach(part2)
         msg.attach(part3)
@@ -243,6 +243,10 @@ def signal_handler(signal, frame):
         pass
     elif (call == 'add'):
         emaildb.add_email()
+        bprint('Press Ctrl+C to enter command')
+        pass
+    elif (call == 'delete'):
+        emaildb.delete_email()
         bprint('Press Ctrl+C to enter command')
         pass
     elif (call == 'test'):
