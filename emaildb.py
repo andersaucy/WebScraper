@@ -66,6 +66,7 @@ def delete_email():
     if (drop == 'yes'):
         delete_query = "DELETE FROM Person WHERE Name=?"
         cursor.execute(delete_query, (name,))
+        db.commit()
         bprint("Succesfully dropped!")
     close_db()
 
