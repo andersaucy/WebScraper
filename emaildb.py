@@ -30,20 +30,29 @@ def email_list():
 def add_email():
     run_db()
     bprint("Adding Email...")
+    add_query = "INSERT INTO Person (Name, Email) VALUES (?, ?)"
+
     bprint("Name of person:")
     name = input()
+    update_query = None
+    lookup_query = "SELECT * FROM Person WHERE Name=?"
+    cursor.execute(lookup_query, (name,))
+    lookup_person = cursor.fetchall()
+    if lookup_person:
+        bprint("Person already exists! Would you like to update?")
+        update = input()
+        if (update[0] == 'y'):
+            update_query = "UPDATE Person SET Email=? WHERE Name=?"
+        if (update[0] == 'n'):
+            return
     email_prompt = "Email Address of " + name + ":"
     bprint(email_prompt)
     email = input()
-    new_person = (name, email)
-    add_query = "INSERT INTO Person (Name, Email) VALUES (?, ?)"
-    #Check if exists
-    cursor.execute("SELECT Person.Name, Person.Email FROM Person;")
-    persons = cursor.fetchall()
-    if new_person in persons:
-        bprint("Person already exists!")
-    elif new_person not in persons:
-        cursor.execute(add_query, list(new_person))
+    if update_query:
+        cursor.execute(update_query, (email, name))
+        db.commit()
+    elif not update_query: #then just add
+        cursor.execute(add_query, (name, email))
         db.commit()
         bprint("Succesfully added!")
     close_db()
@@ -63,7 +72,7 @@ def delete_email():
     for p in dropped_person:
         print (p)
     drop = input()
-    if (drop == 'yes'):
+    if (drop[0] == 'y'):
         delete_query = "DELETE FROM Person WHERE Name=?"
         cursor.execute(delete_query, (name,))
         db.commit()

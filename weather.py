@@ -57,7 +57,7 @@ weathers = {
 
 def main():
     startup()
-    schedule.every().day.at("06:29").do(job)
+    schedule.every().day.at("06:29").do(lambda: job(True))
     while True:
         schedule.run_pending()
         signal.signal(signal.SIGINT, signal_handler)
@@ -135,7 +135,7 @@ def job():
 
     location_form = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="header-TwcHeader-10c7c60c-aebb-4e78-b655-512b2460d9f4"]/div/div/div/div[1]/div/div[1]/div/input')))
     location_form.send_keys(city)
-    time.sleep(1)
+    time.sleep(3)
     location_form.send_keys(Keys.ARROW_DOWN)
     location_form.send_keys(Keys.RETURN)
 
@@ -220,14 +220,14 @@ def job():
         msg.attach(part3)
 
     #Self
-        #smtpObj.sendmail(usr, usr,  msg.as_string())
+        if run is False:
+            smtpObj.sendmail(usr, usr,  msg.as_string())
+            break
     #Others
-        smtpObj.sendmail(usr, p_email,  msg.as_string())
-    # smtpObj.sendmail(usr, Emails.SEAN_EMAIL, msg.as_string())
-    # smtpObj.sendmail(usr, Emails.STEVEN_EMAIL, msg.as_string())
-    # smtpObj.sendmail(usr, Emails.ERICA_EMAIL,  msg.as_string())
-    # smtpObj.sendmail(usr, Emails.JENNY_EMAIL,  msg.as_string())
-    #bprint('All emails sent')
+        elif run is True:
+            smtpObj.sendmail(usr, p_email,  msg.as_string())
+
+    bprint('All emails sent')
     driver.quit()
 
 def signal_handler(signal, frame):
@@ -250,8 +250,9 @@ def signal_handler(signal, frame):
         bprint('Press Ctrl+C to enter command')
         pass
     elif (call == 'test'):
-        job()
-        exit()
+        job(False)
+        bprint('Returning to main dialog')
+        bprint('Press Ctrl+C to enter command')
     else:
         bprint('Returning to main dialog')
         bprint('Press Ctrl+C to enter command')
