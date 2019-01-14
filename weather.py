@@ -36,17 +36,18 @@ clear = emoji.emojize(':white_check_mark:', use_aliases=True)
 wind = emoji.emojize(':dash:', use_aliases = True)
 daynames = {
     "SUN:":"SUNDAY:",
-    "MON:":"MONDAY:",
-    "TUES:":"TUESDAY:",
-    "WED:":"WEDNESDAY:",
-    "THURS:":"THURSDAY:",
-    "FRI:":"FRIDAY:",
-    "SAT:":"SATURDAY:"
+    "MON":"MONDAY",
+    "TUE":"TUESDAY",
+    "WED":"WEDNESDAY",
+    "THURS":"THURSDAY",
+    "FRI":"FRIDAY",
+    "SAT":"SATURDAY"
 }
 
 weathers = {
-    "LOW\n":"","HIGH\n":"","°":"°F",
+    "LOW\n":"","HIGH\n":"",
     "CLOUDY":"CLOUDY"+cloud,
+    "CLOUDS":"CLOUDS"+cloud,
     "RAIN":"RAIN"+rain,
     "SUNNY":"SUNNY"+sun,
     "STORM":"STORM"+storm,
@@ -117,7 +118,12 @@ def locate(driver):
     city = geo_json['city'] + ', ' + geo_json['region_code']
     return city
 
-def job():
+def far_cel(far):
+    raw_cel = (far-32) * (5/9)
+    return int(round(raw_cel))
+
+def job(run):
+    #run is a boolean, if True, it will send. if False, emails will be sent to self
     global usr
     global pw
     global smtpObj
@@ -170,6 +176,12 @@ def job():
         fc.append(report)
 
     forecast = '\n\n'.join(fc)
+
+    degrees = re.findall(r'\n\d+°', forecast)
+    for d in degrees:
+        farenheit = int(d.strip('°'))
+        celsius = far_cel(farenheit)
+        forecast = re.sub(d, d + 'F | ' + str(celsius) + '°C', forecast)
 
     #Farenheit and Weather Emojis
     for weather in weathers.keys():
