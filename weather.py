@@ -39,7 +39,7 @@ daynames = {
     "MON":"MONDAY",
     "TUE":"TUESDAY",
     "WED":"WEDNESDAY",
-    "THURS":"THURSDAY",
+    "THU":"THURSDAY",
     "FRI":"FRIDAY",
     "SAT":"SATURDAY"
 }
@@ -165,6 +165,8 @@ def job(run):
         pass
 
     looking_ahead = driver.find_elements_by_class_name('today-daypart-content')
+    print (looking_ahead[0].get_attribute('innerHTML'))
+
     fc = []
     for l in looking_ahead:
         l.click()
@@ -207,7 +209,8 @@ def job(run):
 
     print(forecast)
 
-    closing = '\n\n{} Weather Report brought to you by {}\nPlease reply with any suggestions on how to improve this experience!'.format(city, url)
+    closing ="""\n\n{} Weather Report stolen from {} and brought to you by me, Anderson!\n\
+Please reply with any suggestions on how to improve your daily weather report consumption experience!""".format(city, url)
 
     part2 = MIMEText(forecast, 'plain')
     part3 = MIMEText(closing, 'plain')
